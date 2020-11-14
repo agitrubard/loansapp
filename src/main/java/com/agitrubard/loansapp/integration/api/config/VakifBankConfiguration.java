@@ -1,6 +1,6 @@
-package com.agitrubard.loansapp.apiconfig;
+package com.agitrubard.loansapp.integration.api.config;
 
-public class VakifBankApiConfiguration {
+public class VakifBankConfiguration {
 
     private final String LOAN_URL = "https://apigw.vakifbank.com.tr:8443/loanCalculator";
     private final String TOKEN_URL = "https://apigw.vakifbank.com.tr:8443/auth/oauth/v2/token";

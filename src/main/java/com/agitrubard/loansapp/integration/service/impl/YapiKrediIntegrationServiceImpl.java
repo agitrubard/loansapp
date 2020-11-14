@@ -1,16 +1,16 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
-import com.agitrubard.loansapp.apiconfig.YapiKrediApiConfiguration;
 import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
 import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.domain.model.enums.BankName;
+import com.agitrubard.loansapp.integration.api.authorization.Token;
+import com.agitrubard.loansapp.integration.api.config.YapiKrediConfiguration;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 
 @Service
-class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implements YapiKrediIntegrationService {
+class YapiKrediIntegrationServiceImpl extends YapiKrediConfiguration implements YapiKrediIntegrationService {
 
     @Override
     public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
@@ -35,7 +35,7 @@ class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implemen
     private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
         headers.add("Content-Type", "application/json");
-        headers.add("Authorization", getToken());
+        headers.add("Authorization", Token.getToken(getTOKEN_URL(), getCLIENT_ID(), getCLIENT_SECRET()));
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
         String nop = String.valueOf(loansPaymentPlanRequest.getLoanTerm());
@@ -47,33 +47,6 @@ class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implemen
         body.add("clientType", "1");
         body.add("nop", nop);
         body.add("principal", principal);
-
-        return new HttpEntity<Object>(body, headers);
-    }
-
-    private String getToken() throws IOException {
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> result;
-        result = restTemplate.exchange(getTOKEN_URL(), HttpMethod.POST, getTokenEntity(), String.class);
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(result.getBody());
-        JsonNode accessToken = root.path("access_token");
-        JsonNode tokenType = root.path("token_type");
-
-        return tokenType.asText() + " " + accessToken.asText();
-    }
-
-    private HttpEntity<?> getTokenEntity() {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
-        headers.add("CONTENT_TYPE", MediaType.APPLICATION_FORM_URLENCODED_VALUE);
-        headers.add("Accept", "application/json");
-
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
-        body.add("scope", "oob");
-        body.add("grant_type", "client_credentials");
-        body.add("client_id", getCLIENT_ID());
-        body.add("client_secret", getCLIENT_SECRET());
 
         return new HttpEntity<Object>(body, headers);
     }

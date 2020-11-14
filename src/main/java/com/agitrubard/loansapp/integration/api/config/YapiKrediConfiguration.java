@@ -1,6 +1,6 @@
-package com.agitrubard.loansapp.apiconfig;
+package com.agitrubard.loansapp.integration.api.config;
 
-public class YapiKrediApiConfiguration {
+public class YapiKrediConfiguration {
 
     private final String LOAN_URL = "https://api.yapikredi.com.tr/api/credit/calculation/v1/loanPaymentPlan";
     private final String TOKEN_URL = "https://api.yapikredi.com.tr/auth/oauth/v2/token";
