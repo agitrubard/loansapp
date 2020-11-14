@@ -2,7 +2,10 @@ package com.agitrubard.loansapp.integration.service.impl;
 
 import com.agitrubard.loansapp.apiconfig.VakifBankApiConfiguration;
 import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
@@ -20,13 +23,13 @@ import java.io.IOException;
 class VakifBankIntegrationServiceImpl extends VakifBankApiConfiguration implements VakifBankIntegrationService {
 
     @Override
-    public String getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+    public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
         HttpEntity<?> entity = getLoanEntity(loansPaymentPlanRequest);
 
         RestTemplate restTemplate = new RestTemplate();
         final ResponseEntity<String> result = restTemplate.exchange(getLOAN_URL(), HttpMethod.POST, entity, String.class);
 
-        return result.getBody();
+        return getLoansPaymentPlanResponse(result);
     }
 
     private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
@@ -81,5 +84,27 @@ class VakifBankIntegrationServiceImpl extends VakifBankApiConfiguration implemen
         body.add("scope", "oob");
 
         return new HttpEntity<Object>(body, headers);
+    }
+
+    private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(result.getBody());
+        JsonNode interestRate = root.path("Data").path("Loan").findValue("InterestRate");
+        JsonNode installmentAmount = root.path("Data").path("Loan").findValue("InstallmentAmount");
+        JsonNode loanTerm = root.path("Data").path("Loan").findValue("LoanTerm");
+        JsonNode totalAmount = root.path("Data").path("Loan").findValue("TotalAmount");
+        double totalPaymentAmount = (installmentAmount.asDouble() * loanTerm.asDouble());
+        double totalInterest = totalPaymentAmount - totalAmount.asDouble();
+        double monthlyCostRate = ((installmentAmount.asDouble() - (totalAmount.asDouble() / loanTerm.asDouble())) / totalInterest) * 100;
+
+        GetLoansPaymentPlanResponse getLoansPaymentPlanResponse = new GetLoansPaymentPlanResponse();
+        getLoansPaymentPlanResponse.setBankName(BankName.VAKIFBANK);
+        getLoansPaymentPlanResponse.setIntRate(interestRate.asDouble());
+        getLoansPaymentPlanResponse.setTotalInterest(totalInterest);
+        getLoansPaymentPlanResponse.setMonthlyCostRate(monthlyCostRate);
+        getLoansPaymentPlanResponse.setInstallmentAmount(installmentAmount.asDouble());
+        getLoansPaymentPlanResponse.setTotalPaymentAmount(totalPaymentAmount);
+
+        return getLoansPaymentPlanResponse;
     }
 }

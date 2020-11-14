@@ -2,7 +2,10 @@ package com.agitrubard.loansapp.integration.service.impl;
 
 import com.agitrubard.loansapp.apiconfig.YapiKrediApiConfiguration;
 import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
@@ -20,13 +23,13 @@ import java.io.IOException;
 class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implements YapiKrediIntegrationService {
 
     @Override
-    public String getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+    public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
         HttpEntity<?> entity = getLoanEntity(loansPaymentPlanRequest);
 
         RestTemplate restTemplate = new RestTemplate();
         final ResponseEntity<String> result = restTemplate.exchange(getLOAN_URL(), HttpMethod.POST, entity, String.class);
 
-        return result.getBody();
+        return getLoansPaymentPlanResponse(result);
     }
 
     private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
@@ -64,7 +67,7 @@ class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implemen
     private HttpEntity<?> getTokenEntity() {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
         headers.add("CONTENT_TYPE", MediaType.APPLICATION_FORM_URLENCODED_VALUE);
-        headers.add("Accept","application/json");
+        headers.add("Accept", "application/json");
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
         body.add("scope", "oob");
@@ -73,5 +76,25 @@ class YapiKrediIntegrationServiceImpl extends YapiKrediApiConfiguration implemen
         body.add("client_secret", getCLIENT_SECRET());
 
         return new HttpEntity<Object>(body, headers);
+    }
+
+    private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(result.getBody());
+        JsonNode intRate = root.path("response").path("return").path("intRate");
+        JsonNode totalInterest = root.path("response").path("return").path("totalInterest");
+        JsonNode monthlyCostRate = root.path("response").path("return").path("monthlyCostRate");
+        JsonNode installmentAmount = root.path("response").path("return").path("installmentList").findValue("installmentAmount");
+        JsonNode totalPaymentAmount = root.path("response").path("return").path("totalPaymentAmount");
+
+        GetLoansPaymentPlanResponse getLoansPaymentPlanResponse = new GetLoansPaymentPlanResponse();
+        getLoansPaymentPlanResponse.setBankName(BankName.YAPIKREDI);
+        getLoansPaymentPlanResponse.setIntRate(intRate.asDouble() * 100);
+        getLoansPaymentPlanResponse.setTotalInterest(totalInterest.asDouble());
+        getLoansPaymentPlanResponse.setMonthlyCostRate(monthlyCostRate.asDouble());
+        getLoansPaymentPlanResponse.setInstallmentAmount(installmentAmount.asDouble());
+        getLoansPaymentPlanResponse.setTotalPaymentAmount(totalPaymentAmount.asDouble());
+
+        return getLoansPaymentPlanResponse;
     }
 }

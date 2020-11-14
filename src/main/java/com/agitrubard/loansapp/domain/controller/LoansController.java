@@ -2,6 +2,7 @@ package com.agitrubard.loansapp.domain.controller;
 
 import com.agitrubard.loansapp.domain.controller.endpoint.LoanControllerEndpoint;
 import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,13 @@ public class LoansController {
         this.yapiKrediIntegrationService = yapiKrediIntegrationService;
     }
 
-    @GetMapping(value = LoanControllerEndpoint.GET_LOAN_PAYMENT_PLAN)
-    public String getLoanPaymentPlan(@RequestBody LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
-        return "------------ VAKIFBANK ------------\n" + vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest) + "\n\n" +
-               "------------ YAPIKREDİ ------------\n" + yapiKrediIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
+    @GetMapping(value = LoanControllerEndpoint.GET_LOAN_PAYMENT_PLAN_VAKIFBANK)
+    public GetLoansPaymentPlanResponse getLoanPaymentPlanVakifBank(@RequestBody LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+        return vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
+    }
+
+    @GetMapping(value = LoanControllerEndpoint.GET_LOAN_PAYMENT_PLAN_YAPIKREDI)
+    public GetLoansPaymentPlanResponse getLoanPaymentPlanYapiKredi(@RequestBody LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+        return yapiKrediIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
     }
 }
