@@ -1,7 +1,8 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
-import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
-import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.converter.GetLoansPaymentPlanResponseConverter;
+import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.integration.api.authorization.Token;
 import com.agitrubard.loansapp.integration.api.config.VakifBankConfiguration;
@@ -60,24 +61,17 @@ class VakifBankIntegrationServiceImpl extends VakifBankConfiguration implements 
     }
 
     private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        BankName bankName = BankName.VAKIFBANK;
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(result.getBody());
-        JsonNode interestRate = root.path("Data").path("Loan").findValue("InterestRate");
-        JsonNode installmentAmount = root.path("Data").path("Loan").findValue("InstallmentAmount");
-        JsonNode loanTerm = root.path("Data").path("Loan").findValue("LoanTerm");
-        JsonNode totalAmount = root.path("Data").path("Loan").findValue("TotalAmount");
-        double totalPaymentAmount = (installmentAmount.asDouble() * loanTerm.asDouble());
-        double totalInterest = totalPaymentAmount - totalAmount.asDouble();
-        double monthlyCostRate = ((installmentAmount.asDouble() - (totalAmount.asDouble() / loanTerm.asDouble())) / totalInterest) * 100;
+        double intRate = (root.path("Data").path("Loan").findValue("InterestRate")).asDouble();
+        double loanTerm = (root.path("Data").path("Loan").findValue("LoanTerm")).asDouble();
+        double totalAmount = (root.path("Data").path("Loan").findValue("TotalAmount")).asDouble();
+        double installmentAmount = (root.path("Data").path("Loan").findValue("InstallmentAmount")).asDouble();
+        double totalPaymentAmount = (installmentAmount * loanTerm);
+        double totalInterest = totalPaymentAmount - totalAmount;
+        double monthlyCostRate = ((installmentAmount - (totalAmount / loanTerm)) / totalInterest) * 100;
 
-        GetLoansPaymentPlanResponse getLoansPaymentPlanResponse = new GetLoansPaymentPlanResponse();
-        getLoansPaymentPlanResponse.setBankName(BankName.VAKIFBANK);
-        getLoansPaymentPlanResponse.setIntRate(interestRate.asDouble());
-        getLoansPaymentPlanResponse.setTotalInterest(totalInterest);
-        getLoansPaymentPlanResponse.setMonthlyCostRate(monthlyCostRate);
-        getLoansPaymentPlanResponse.setInstallmentAmount(installmentAmount.asDouble());
-        getLoansPaymentPlanResponse.setTotalPaymentAmount(totalPaymentAmount);
-
-        return getLoansPaymentPlanResponse;
+        return GetLoansPaymentPlanResponseConverter.convert(bankName, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
     }
 }

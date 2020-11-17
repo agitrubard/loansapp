@@ -1,4 +1,4 @@
-package com.agitrubard.loansapp.domain.controller.request;
+package com.agitrubard.loansapp.domain.model.request;
 
 import java.io.Serializable;
 import java.util.Objects;

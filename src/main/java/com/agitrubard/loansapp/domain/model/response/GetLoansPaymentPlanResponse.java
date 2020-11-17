@@ -1,4 +1,4 @@
-package com.agitrubard.loansapp.domain.controller.response;
+package com.agitrubard.loansapp.domain.model.response;
 
 import com.agitrubard.loansapp.domain.model.enums.BankName;
 

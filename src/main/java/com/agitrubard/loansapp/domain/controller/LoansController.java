@@ -1,8 +1,8 @@
 package com.agitrubard.loansapp.domain.controller;
 
 import com.agitrubard.loansapp.domain.controller.endpoint.LoanControllerEndpoint;
-import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
-import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import org.springframework.web.bind.annotation.*;

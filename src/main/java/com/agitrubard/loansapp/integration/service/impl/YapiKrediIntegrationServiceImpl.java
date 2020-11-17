@@ -1,7 +1,8 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
-import com.agitrubard.loansapp.domain.controller.request.LoansPaymentPlanRequest;
-import com.agitrubard.loansapp.domain.controller.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.converter.GetLoansPaymentPlanResponseConverter;
+import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.integration.api.authorization.Token;
 import com.agitrubard.loansapp.integration.api.config.YapiKrediConfiguration;
@@ -52,22 +53,15 @@ class YapiKrediIntegrationServiceImpl extends YapiKrediConfiguration implements 
     }
 
     private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        BankName bankName = BankName.YAPIKREDI;
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(result.getBody());
-        JsonNode intRate = root.path("response").path("return").path("intRate");
-        JsonNode totalInterest = root.path("response").path("return").path("totalInterest");
-        JsonNode monthlyCostRate = root.path("response").path("return").path("monthlyCostRate");
-        JsonNode installmentAmount = root.path("response").path("return").path("installmentList").findValue("installmentAmount");
-        JsonNode totalPaymentAmount = root.path("response").path("return").path("totalPaymentAmount");
+        double intRate = (root.path("response").path("return").path("intRate")).asDouble() * 100;
+        double totalInterest = (root.path("response").path("return").path("totalInterest")).asDouble();
+        double monthlyCostRate = (root.path("response").path("return").path("monthlyCostRate")).asDouble();
+        double installmentAmount = (root.path("response").path("return").path("installmentList").findValue("installmentAmount")).asDouble();
+        double totalPaymentAmount = (root.path("response").path("return").path("totalPaymentAmount")).asDouble();
 
-        GetLoansPaymentPlanResponse getLoansPaymentPlanResponse = new GetLoansPaymentPlanResponse();
-        getLoansPaymentPlanResponse.setBankName(BankName.YAPIKREDI);
-        getLoansPaymentPlanResponse.setIntRate(intRate.asDouble() * 100);
-        getLoansPaymentPlanResponse.setTotalInterest(totalInterest.asDouble());
-        getLoansPaymentPlanResponse.setMonthlyCostRate(monthlyCostRate.asDouble());
-        getLoansPaymentPlanResponse.setInstallmentAmount(installmentAmount.asDouble());
-        getLoansPaymentPlanResponse.setTotalPaymentAmount(totalPaymentAmount.asDouble());
-
-        return getLoansPaymentPlanResponse;
+        return GetLoansPaymentPlanResponseConverter.convert(bankName, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
     }
 }
