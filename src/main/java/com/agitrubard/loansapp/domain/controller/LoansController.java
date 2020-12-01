@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(LoanControllerEndpoint.CUSTOMER)
@@ -38,7 +39,7 @@ public class LoansController {
     }
 
     @PostMapping(value = LoanControllerEndpoint.GET_LOANS_PAYMENT_PLANS)
-    public List<GetLoansPaymentPlanResponse> getLoansPaymentPlans(@RequestBody @Valid LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+    public List<GetLoansPaymentPlanResponse> getLoansPaymentPlans(@RequestBody @Valid LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException, ExecutionException, InterruptedException {
         return combinedBankingIntegrationService.getLoansPaymentPlans(loansPaymentPlanRequest);
     }
 }

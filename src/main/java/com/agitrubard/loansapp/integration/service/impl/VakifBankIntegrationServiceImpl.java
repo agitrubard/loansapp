@@ -38,19 +38,7 @@ class VakifBankIntegrationServiceImpl extends VakifBankConfiguration implements 
         headers.add("Authorization", Token.getToken(getTOKEN_URL(), getCLIENT_ID(), getCLIENT_SECRET()));
         headers.add("Content-Type", "application/json");
 
-        /*
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
-        String loanTerm = String.valueOf(loansPaymentPlanRequest.getLoanTerm());
-        String loanAmount = String.valueOf(loansPaymentPlanRequest.getLoanAmount());
-
-        body.add("LoanProductId", "35009");
-        body.add("LoanTerm", loanTerm);
-        body.add("LoanAmount", loanAmount);
-        body.add("GracePeriod", "0");
-        body.add("InstallmentPeriod", "1");
-        */
-
-        String parameters = "{    \"LoanProductId\": \"35009\",    " +
+        String parameters = "{    \"LoanProductId\": \"41001\",    " +
                 "\"LoanTerm\": " + loansPaymentPlanRequest.getLoanTerm() + ",    " +
                 "\"LoanAmount\":  " + loansPaymentPlanRequest.getLoanAmount() + ",    " +
                 "\"GracePeriod\": 0,    " +
