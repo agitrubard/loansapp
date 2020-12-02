@@ -28,16 +28,16 @@ public class Token {
     }
 
     private static HttpEntity<?> getTokenEntity(String CLIENT_ID, String CLIENT_SECRET) {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add("CONTENT_TYPE", MediaType.APPLICATION_FORM_URLENCODED_VALUE);
         headers.add("Accept", "application/json");
 
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", CLIENT_ID);
         body.add("client_secret", CLIENT_SECRET);
         body.add("grant_type", "client_credentials");
         body.add("scope", "oob");
 
-        return new HttpEntity<Object>(body, headers);
+        return new HttpEntity<>(body, headers);
     }
 }

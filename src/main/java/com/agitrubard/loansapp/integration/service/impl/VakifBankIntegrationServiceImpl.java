@@ -21,21 +21,24 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 
 @Service
-class VakifBankIntegrationServiceImpl extends VakifBankConfiguration implements VakifBankIntegrationService {
+class VakifBankIntegrationServiceImpl implements VakifBankIntegrationService {
+
+    private static final String DATA = "Data";
+    private static final String LOAN = "Loan";
 
     @Override
     public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
         HttpEntity<?> entity = getLoanEntity(loansPaymentPlanRequest);
 
         RestTemplate restTemplate = new RestTemplate();
-        final ResponseEntity<String> result = restTemplate.exchange(getLOAN_URL(), HttpMethod.POST, entity, String.class);
+        final ResponseEntity<String> result = restTemplate.exchange(VakifBankConfiguration.LOAN_URL, HttpMethod.POST, entity, String.class);
 
         return getLoansPaymentPlanResponse(result);
     }
 
     private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
-        headers.add("Authorization", Token.getToken(getTOKEN_URL(), getCLIENT_ID(), getCLIENT_SECRET()));
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Authorization", Token.getToken(VakifBankConfiguration.TOKEN_URL, VakifBankConfiguration.CLIENT_ID, VakifBankConfiguration.CLIENT_SECRET));
         headers.add("Content-Type", "application/json");
 
         String parameters = "{    \"LoanProductId\": \"41001\",    " +
@@ -45,21 +48,20 @@ class VakifBankIntegrationServiceImpl extends VakifBankConfiguration implements 
                 "\"InstallmentPeriod\": 1}";
         byte[] body = parameters.getBytes();
 
-        return new HttpEntity<Object>(body, headers);
+        return new HttpEntity<>(body, headers);
     }
 
     private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
-        BankName bankName = BankName.VAKIFBANK;
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(result.getBody());
-        double intRate = (root.path("Data").path("Loan").findValue("InterestRate")).asDouble();
-        double loanTerm = (root.path("Data").path("Loan").findValue("LoanTerm")).asDouble();
-        double totalAmount = (root.path("Data").path("Loan").findValue("TotalAmount")).asDouble();
-        double installmentAmount = (root.path("Data").path("Loan").findValue("InstallmentAmount")).asDouble();
+        double intRate = (root.path(DATA).path(LOAN).findValue("InterestRate")).asDouble();
+        double loanTerm = (root.path(DATA).path(LOAN).findValue("LoanTerm")).asDouble();
+        double totalAmount = (root.path(DATA).path(LOAN).findValue("TotalAmount")).asDouble();
+        double installmentAmount = (root.path(DATA).path(LOAN).findValue("InstallmentAmount")).asDouble();
         double totalPaymentAmount = (installmentAmount * loanTerm);
         double totalInterest = totalPaymentAmount - totalAmount;
         double monthlyCostRate = ((installmentAmount - (totalAmount / loanTerm)) / totalInterest) * 100;
 
-        return GetLoansPaymentPlanResponseConverter.convert(bankName, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
+        return GetLoansPaymentPlanResponseConverter.convert(BankName.VAKIFBANK, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
     }
 }

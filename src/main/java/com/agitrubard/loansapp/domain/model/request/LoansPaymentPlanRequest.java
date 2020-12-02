@@ -1,9 +1,11 @@
 package com.agitrubard.loansapp.domain.model.request;
 
+import lombok.Data;
+
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Objects;
 
+@Data
 public class LoansPaymentPlanRequest implements Serializable {
 
     private static final long serialVersionUID = -8224036318459891490L;
@@ -11,42 +13,4 @@ public class LoansPaymentPlanRequest implements Serializable {
     private int loanTerm;
     @NotNull
     private int loanAmount;
-
-    public int getLoanTerm() {
-        return loanTerm;
-    }
-
-    public void setLoanTerm(int loanTerm) {
-        this.loanTerm = loanTerm;
-    }
-
-    public int getLoanAmount() {
-        return loanAmount;
-    }
-
-    public void setLoanAmount(int loanAmount) {
-        this.loanAmount = loanAmount;
-    }
-
-    @Override
-    public String toString() {
-        return "LoansPaymentPlanRequest{" +
-                "loanTerm=" + loanTerm +
-                ", loanAmount=" + loanAmount +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof LoansPaymentPlanRequest)) return false;
-        LoansPaymentPlanRequest that = (LoansPaymentPlanRequest) o;
-        return getLoanTerm() == that.getLoanTerm() &&
-                getLoanAmount() == that.getLoanAmount();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getLoanTerm(), getLoanAmount());
-    }
 }
