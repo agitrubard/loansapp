@@ -8,7 +8,7 @@ import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,16 +26,23 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
 
     @Override
     public List<GetLoansPaymentPlanResponse> getLoansPaymentPlans(LoansPaymentPlanRequest loansPaymentPlanRequest) throws ExecutionException, InterruptedException {
-        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank = CompletableFuture.supplyAsync(() -> {
-            try {
-                return vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        });
+        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank = getLoansPaymentPlanResponseVakifBank(loansPaymentPlanRequest);
 
-        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi = getLoansPaymentPlanResponseYapiKredi(loansPaymentPlanRequest);
+
+        CompletableFuture<List<GetLoansPaymentPlanResponse>> getLoansPaymentPlanResponses = getLoansPaymentPlanResponseVakifBank
+                .thenCombineAsync(getLoansPaymentPlanResponseYapiKredi, (vakifBankLoans, yapiKrediLoans) -> {
+                    List<GetLoansPaymentPlanResponse> responses = new ArrayList<>();
+                    responses.add(vakifBankLoans);
+                    responses.add(yapiKrediLoans);
+                    return responses;
+                });
+
+        return getLoansPaymentPlanResponses.get();
+    }
+
+    private CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi(LoansPaymentPlanRequest loansPaymentPlanRequest) {
+        return CompletableFuture.supplyAsync(() -> {
             try {
                 return yapiKrediIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
             } catch (IOException e) {
@@ -43,17 +50,16 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
             }
             return null;
         });
+    }
 
-        CompletableFuture<List<GetLoansPaymentPlanResponse>> getLoansPaymentPlanResponses = getLoansPaymentPlanResponseVakifBank
-                .thenCombineAsync(getLoansPaymentPlanResponseYapiKredi, (vakifBankLoans, yapiKrediLoans) -> {
-                    List<GetLoansPaymentPlanResponse> responses = new LinkedList<>();
-
-                    responses.add(vakifBankLoans);
-                    responses.add(yapiKrediLoans);
-
-                    return responses;
-                });
-
-        return getLoansPaymentPlanResponses.get();
+    private CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank(LoansPaymentPlanRequest loansPaymentPlanRequest) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
     }
 }
