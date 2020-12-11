@@ -1,7 +1,9 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
+import com.agitrubard.loansapp.domain.model.converter.GetCurrencyRatesResponseConverter;
 import com.agitrubard.loansapp.domain.model.converter.GetLoansPaymentPlanResponseConverter;
 import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetCurrencyRatesResponse;
 import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.integration.api.authorization.Token;
@@ -19,6 +21,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
@@ -36,11 +40,24 @@ class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
         return getLoansPaymentPlanResponse(result);
     }
 
-    private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+    @Override
+    public List<GetCurrencyRatesResponse> getCurrencyRates() throws IOException {
+        HttpEntity<?> entity = getCurrencyRatesEntity();
+
+        RestTemplate restTemplate = new RestTemplate();
+        final ResponseEntity<String> result = restTemplate.exchange(YapiKrediConfiguration.CURRENCY_RATES_URL, HttpMethod.GET, entity, String.class);
+
+        return getCurrencyRatesResponse(result);
+    }
+
+    private MultiValueMap<String, String> getHeaders() throws IOException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add("Content-Type", "application/json");
         headers.add("Authorization", Token.getToken(YapiKrediConfiguration.TOKEN_URL, YapiKrediConfiguration.CLIENT_ID, YapiKrediConfiguration.CLIENT_SECRET));
+        return headers;
+    }
 
+    private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         String nop = String.valueOf(loansPaymentPlanRequest.getLoanTerm());
         String principal = String.valueOf(loansPaymentPlanRequest.getLoanAmount());
@@ -52,7 +69,11 @@ class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
         body.add("nop", nop);
         body.add("principal", principal);
 
-        return new HttpEntity<>(body, headers);
+        return new HttpEntity<>(body, getHeaders());
+    }
+
+    private HttpEntity<?> getCurrencyRatesEntity() throws IOException {
+        return new HttpEntity<>(getHeaders());
     }
 
     private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
@@ -65,5 +86,36 @@ class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
         double totalPaymentAmount = (root.path(RESPONSE).path(RETURN).path("totalPaymentAmount")).asDouble();
 
         return GetLoansPaymentPlanResponseConverter.convert(BankName.YAPIKREDI, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
+    }
+
+    private List<GetCurrencyRatesResponse> getCurrencyRatesResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(result.getBody());
+        JsonNode exchangeRateList = root.path(RESPONSE).path("exchangeRateList");
+
+        List<JsonNode> minorCurrencies = exchangeRateList.findValues("minorCurrency");
+        List<JsonNode> majorCurrencies = exchangeRateList.findValues("majorCurrency");
+        List<JsonNode> sellRates = exchangeRateList.findValues("sellRate");
+        List<JsonNode> buyRates = exchangeRateList.findValues("buyRate");
+        List<JsonNode> averageRates = exchangeRateList.findValues("averageRate");
+
+        return getCurrencyRatesReponseList(minorCurrencies, majorCurrencies, sellRates, buyRates, averageRates);
+    }
+
+    private List<GetCurrencyRatesResponse> getCurrencyRatesReponseList(List<JsonNode> minorCurrencies, List<JsonNode> majorCurrencies, List<JsonNode> sellRates, List<JsonNode> buyRates, List<JsonNode> averageRates) {
+        List<GetCurrencyRatesResponse> getCurrencyRatesResponses = new ArrayList<>();
+
+        for (int i = 0; i < minorCurrencies.size(); i++) {
+            String minorCurrency = minorCurrencies.get(i).asText();
+
+            if (minorCurrency.equals("TL")) {
+                String currencyName = majorCurrencies.get(i).asText();
+                double sellRate = sellRates.get(i).asDouble();
+                double buyRate = buyRates.get(i).asDouble();
+                double averageRate = averageRates.get(i).asDouble();
+                getCurrencyRatesResponses.add(GetCurrencyRatesResponseConverter.convert(currencyName, sellRate, buyRate, averageRate));
+            }
+        }
+        return getCurrencyRatesResponses;
     }
 }
