@@ -1,15 +1,18 @@
 package com.agitrubard.loansapp.integration.service;
 
+import com.agitrubard.loansapp.domain.model.exception.LoanAmountException;
+import com.agitrubard.loansapp.domain.model.exception.LoanTermException;
+import com.agitrubard.loansapp.domain.model.exception.LoansPaymentPlanResponseException;
+import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
 import com.agitrubard.loansapp.domain.model.response.GetCurrencyRatesResponse;
 import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 
-import java.io.IOException;
 import java.util.List;
 
 public interface BankingService {
 
-    GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException;
+    GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws LoanAmountException, LoanTermException, TokenException, LoansPaymentPlanResponseException;
 
-    List<GetCurrencyRatesResponse> getCurrencyRates() throws IOException;
+    List<GetCurrencyRatesResponse> getCurrencyRates() throws TokenException;
 }

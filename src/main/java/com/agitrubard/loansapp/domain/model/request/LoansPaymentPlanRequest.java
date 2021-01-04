@@ -10,7 +10,7 @@ public class LoansPaymentPlanRequest implements Serializable {
 
     private static final long serialVersionUID = -8224036318459891490L;
     @NotNull
-    private int loanTerm;
+    private Integer loanTerm;
     @NotNull
-    private int loanAmount;
+    private Integer loanAmount;
 }

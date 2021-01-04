@@ -1,17 +1,24 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
-import com.agitrubard.loansapp.domain.model.converter.GetCurrencyRatesResponseConverter;
+import com.agitrubard.loansapp.domain.model.Constant;
 import com.agitrubard.loansapp.domain.model.converter.GetLoansPaymentPlanResponseConverter;
+import com.agitrubard.loansapp.domain.model.enums.Currency;
+import com.agitrubard.loansapp.domain.model.exception.LoanAmountException;
+import com.agitrubard.loansapp.domain.model.exception.LoanTermException;
+import com.agitrubard.loansapp.domain.model.exception.LoansPaymentPlanResponseException;
+import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
 import com.agitrubard.loansapp.domain.model.response.GetCurrencyRatesResponse;
 import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.domain.model.enums.BankName;
+import com.agitrubard.loansapp.domain.model.response.external.yapikredi.YapiKrediBaseResponse;
 import com.agitrubard.loansapp.integration.api.authorization.Token;
 import com.agitrubard.loansapp.integration.api.config.YapiKrediConfiguration;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -20,102 +27,116 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
+@Slf4j
+public class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
+    private final YapiKrediConfiguration yapiKrediConfiguration;
+    private final RestTemplate restTemplate;
 
-    private static final String RESPONSE = "response";
-    private static final String RETURN = "return";
+    public YapiKrediIntegrationServiceImpl(YapiKrediConfiguration yapiKrediConfiguration, RestTemplate restTemplate) {
+        this.yapiKrediConfiguration = yapiKrediConfiguration;
+        this.restTemplate = restTemplate;
+    }
 
     @Override
-    public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
-        HttpEntity<?> entity = getLoanEntity(loansPaymentPlanRequest);
+    public GetLoansPaymentPlanResponse getLoansPaymentPlan(LoansPaymentPlanRequest loansPaymentPlanRequest) throws LoanAmountException, LoanTermException, TokenException, LoansPaymentPlanResponseException {
+        log.info("YapiKredi Loan Payment Plan Call Starting");
 
-        RestTemplate restTemplate = new RestTemplate();
-        final ResponseEntity<String> result = restTemplate.exchange(YapiKrediConfiguration.LOAN_URL, HttpMethod.POST, entity, String.class);
+        if (loansPaymentPlanRequest.getLoanAmount() < 2000) {
+            throw new LoanAmountException();
+        } else if (loansPaymentPlanRequest.getLoanTerm() <= 0) {
+            throw new LoanTermException();
+        }
+
+        HttpEntity<?> entity = getLoanEntity(loansPaymentPlanRequest);
+        final ResponseEntity<String> result = restTemplate.exchange(yapiKrediConfiguration.getLoanUrl(), HttpMethod.POST, entity, String.class);
 
         return getLoansPaymentPlanResponse(result);
     }
 
     @Override
-    public List<GetCurrencyRatesResponse> getCurrencyRates() throws IOException {
+    public List<GetCurrencyRatesResponse> getCurrencyRates() throws TokenException {
+        log.info("YapiKredi Currency Rates Call Starting");
+
         HttpEntity<?> entity = getCurrencyRatesEntity();
+        final ResponseEntity<YapiKrediBaseResponse> result = restTemplate.exchange(yapiKrediConfiguration.getCurrencyRatesUrl(), HttpMethod.GET, entity, YapiKrediBaseResponse.class);
+        YapiKrediBaseResponse yapiKrediBaseResponse = result.getBody();
 
-        RestTemplate restTemplate = new RestTemplate();
-        final ResponseEntity<String> result = restTemplate.exchange(YapiKrediConfiguration.CURRENCY_RATES_URL, HttpMethod.GET, entity, String.class);
-
-        return getCurrencyRatesResponse(result);
+        return Optional.ofNullable(getCurrencyRatesResponse(yapiKrediBaseResponse)).orElse(new ArrayList<>());
     }
 
-    private MultiValueMap<String, String> getHeaders() throws IOException {
+    private MultiValueMap<String, String> getHeaders() throws TokenException {
+        log.info("YapiKredi Headers Call Starting");
+
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Content-Type", "application/json");
-        headers.add("Authorization", Token.getToken(YapiKrediConfiguration.TOKEN_URL, YapiKrediConfiguration.CLIENT_ID, YapiKrediConfiguration.CLIENT_SECRET));
+        headers.add(Constant.CONTENT_TYPE, Constant.CONTENT_TYPE_APPLICATION_JSON);
+        headers.add(Constant.AUTHORIZATION, Token.getToken(yapiKrediConfiguration.getTokenUrl(), yapiKrediConfiguration.getClientId(), yapiKrediConfiguration.getClientSecret()));
         return headers;
     }
 
-    private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws IOException {
+    private HttpEntity<?> getLoanEntity(LoansPaymentPlanRequest loansPaymentPlanRequest) throws TokenException {
+        log.info("YapiKredi Loan Entity Call Starting");
+
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         String nop = String.valueOf(loansPaymentPlanRequest.getLoanTerm());
         String principal = String.valueOf(loansPaymentPlanRequest.getLoanAmount());
 
-        body.add("branchCode", "925");
-        body.add("channelCode", "OPN");
-        body.add("categoryCode", "W9");
-        body.add("clientType", "1");
-        body.add("nop", nop);
-        body.add("principal", principal);
+        body.add(Constant.YAPIKREDI_BRANCH_CODE, Constant.YAPIKREDI_BRANCH_CODE_VALUE_925);
+        body.add(Constant.YAPIKREDI_CHANNEL_CODE, Constant.YAPIKREDI_CHANNEL_CODE_VALUE_OPN);
+        body.add(Constant.YAPIKREDI_CATEGORY_CODE, Constant.YAPIKREDI_CATEGORY_CODE_VALUE_W9);
+        body.add(Constant.YAPIKREDI_CLIENT_TYPE, Constant.YAPIKREDI_CLIENT_TYPE_VALUE_1);
+        body.add(Constant.YAPIKREDI_NOP, nop);
+        body.add(Constant.YAPIKREDI_PRINCIPAL, principal);
 
         return new HttpEntity<>(body, getHeaders());
     }
 
-    private HttpEntity<?> getCurrencyRatesEntity() throws IOException {
-        return new HttpEntity<>(getHeaders());
-    }
+    private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws LoansPaymentPlanResponseException {
+        log.info("YapiKredi Get Loans Payment Plan Response Call Starting");
 
-    private GetLoansPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws JsonProcessingException {
+        if (result.getBody() == null)
+            return new GetLoansPaymentPlanResponse();
+
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(result.getBody());
-        double intRate = (root.path(RESPONSE).path(RETURN).path("intRate")).asDouble() * 100;
-        double totalInterest = (root.path(RESPONSE).path(RETURN).path("totalInterest")).asDouble();
-        double monthlyCostRate = (root.path(RESPONSE).path(RETURN).path("monthlyCostRate")).asDouble();
-        double installmentAmount = (root.path(RESPONSE).path(RETURN).path("installmentList").findValue("installmentAmount")).asDouble();
-        double totalPaymentAmount = (root.path(RESPONSE).path(RETURN).path("totalPaymentAmount")).asDouble();
+        JsonNode root;
+        try {
+            root = mapper.readTree(result.getBody());
+        } catch (JsonProcessingException e) {
+            throw new LoansPaymentPlanResponseException();
+        }
+        JsonNode responseReturn = root.path(Constant.YAPIKREDI_RESPONSE).path(Constant.YAPIKREDI_RETURN);
+        Double intRate = (responseReturn.path(Constant.YAPIKREDI_INT_RATE)).asDouble() * 100;
+        Double totalInterest = (responseReturn.path(Constant.YAPIKREDI_TOTAL_INTEREST)).asDouble();
+        Double monthlyCostRate = (responseReturn.path(Constant.YAPIKREDI_MONTHLY_COST_RATE)).asDouble();
+        Double installmentAmount = (responseReturn.path(Constant.YAPIKREDI_INSTALLMENT_LIST).findValue(Constant.YAPIKREDI_INSTALLMENT_AMOUNT)).asDouble();
+        Double totalPaymentAmount = (responseReturn.path(Constant.YAPIKREDI_TOTAL_PAYMENT_AMOUNT)).asDouble();
 
         return GetLoansPaymentPlanResponseConverter.convert(BankName.YAPIKREDI, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
     }
 
-    private List<GetCurrencyRatesResponse> getCurrencyRatesResponse(ResponseEntity<String> result) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(result.getBody());
-        JsonNode exchangeRateList = root.path(RESPONSE).path("exchangeRateList");
+    private HttpEntity<?> getCurrencyRatesEntity() throws TokenException {
+        log.info("YapiKredi Currency Rates Entity Call Starting");
 
-        List<JsonNode> minorCurrencies = exchangeRateList.findValues("minorCurrency");
-        List<JsonNode> majorCurrencies = exchangeRateList.findValues("majorCurrency");
-        List<JsonNode> sellRates = exchangeRateList.findValues("sellRate");
-        List<JsonNode> buyRates = exchangeRateList.findValues("buyRate");
-        List<JsonNode> averageRates = exchangeRateList.findValues("averageRate");
-
-        return getCurrencyRatesReponseList(minorCurrencies, majorCurrencies, sellRates, buyRates, averageRates);
+        return new HttpEntity<>(getHeaders());
     }
 
-    private List<GetCurrencyRatesResponse> getCurrencyRatesReponseList(List<JsonNode> minorCurrencies, List<JsonNode> majorCurrencies, List<JsonNode> sellRates, List<JsonNode> buyRates, List<JsonNode> averageRates) {
-        List<GetCurrencyRatesResponse> getCurrencyRatesResponses = new ArrayList<>();
+    private List<GetCurrencyRatesResponse> getCurrencyRatesResponse(YapiKrediBaseResponse yapiKrediBaseResponse) {
+        log.info("YapiKredi Get Currency Rates Response Call Starting");
 
-        for (int i = 0; i < minorCurrencies.size(); i++) {
-            String minorCurrency = minorCurrencies.get(i).asText();
+        if (yapiKrediBaseResponse == null || yapiKrediBaseResponse.getResponse() == null)
+            return new ArrayList<>();
 
-            if (minorCurrency.equals("TL")) {
-                String currencyName = majorCurrencies.get(i).asText();
-                double sellRate = sellRates.get(i).asDouble();
-                double buyRate = buyRates.get(i).asDouble();
-                double averageRate = averageRates.get(i).asDouble();
-                getCurrencyRatesResponses.add(GetCurrencyRatesResponseConverter.convert(currencyName, sellRate, buyRate, averageRate));
-            }
-        }
-        return getCurrencyRatesResponses;
+        return yapiKrediBaseResponse.getResponse().getExchangeRateList().stream()
+                .filter(currency -> currency.getMinorCurrency().equals(Currency.TL.toString()))
+                .map(exchangeRate -> GetCurrencyRatesResponse.builder()
+                        .currencyName(exchangeRate.getMajorCurrency())
+                        .sellRate(exchangeRate.getSellRate())
+                        .buyRate(exchangeRate.getBuyRate())
+                        .averageRate(exchangeRate.getAverageRate()).build()).collect(Collectors.toList());
     }
 }

@@ -11,9 +11,9 @@ import lombok.ToString;
 public class GetLoansPaymentPlanResponse {
 
     private BankName bankName;
-    private double intRate;
-    private double totalInterest;
-    private double monthlyCostRate;
-    private double installmentAmount;
-    private double totalPaymentAmount;
+    private Double intRate;
+    private Double totalInterest;
+    private Double monthlyCostRate;
+    private Double installmentAmount;
+    private Double totalPaymentAmount;
 }

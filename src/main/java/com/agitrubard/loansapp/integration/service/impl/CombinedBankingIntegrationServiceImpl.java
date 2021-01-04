@@ -1,5 +1,9 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
+import com.agitrubard.loansapp.domain.model.exception.LoanAmountException;
+import com.agitrubard.loansapp.domain.model.exception.LoanTermException;
+import com.agitrubard.loansapp.domain.model.exception.LoansPaymentPlanResponseException;
+import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
 import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.CombinedBankingIntegrationService;
@@ -7,7 +11,6 @@ import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +48,7 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return yapiKrediIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
-            } catch (IOException e) {
+            } catch (LoanAmountException | LoanTermException | TokenException | LoansPaymentPlanResponseException e) {
                 e.printStackTrace();
             }
             return null;
@@ -56,7 +59,7 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
-            } catch (IOException e) {
+            } catch (LoansPaymentPlanResponseException | TokenException e) {
                 e.printStackTrace();
             }
             return null;
