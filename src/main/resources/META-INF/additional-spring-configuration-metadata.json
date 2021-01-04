@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "yapikrediconfig.client-secret",
+      "type": "java.lang.String",
+      "description": "Description for yapikrediconfig.client-secret."
+  }
+] }
