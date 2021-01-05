@@ -1,0 +1,13 @@
+vakifbankconfig:
+  client-id: l7xx70b66982084a48f9ab73f2904f0cd33c
+  client-secret: 1992492d6ead42a982230fef7476a2f7
+  token-url: https://apigw.vakifbank.com.tr:8443/auth/oauth/v2/token
+  loan-url: https://apigw.vakifbank.com.tr:8443/loanCalculator
+  currency-rates-url: https://apigw.vakifbank.com.tr:8443/getCurrencyRates
+
+yapikrediconfig:
+    client-id: l7xx179417aa99e34db683a93e9eac411885
+    client-secret: f8c96815056b48d7992fc4221393ddcf
+    token-url: https://api.yapikredi.com.tr/auth/oauth/v2/token
+    loan-url: https://api.yapikredi.com.tr/api/credit/calculation/v1/loanPaymentPlan
+    currency-rates-url: https://api.yapikredi.com.tr/api/investmentrates/v1/currencyRates
