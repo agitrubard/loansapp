@@ -157,10 +157,27 @@ YapıKredi & VakıfBank APIs Integration
          	"buyRate": 451.8553139, <br>
          	"averageRate": 462.7568476 <br>
 			}, <br>
-			{ <br>
+			{ <br> 
          	"currencyName": "ZAR", <br>
          	"sellRate": 0.49870258, <br>
          	"buyRate": 0.486312407, <br>
          	"averageRate": 0.492507494 <br>
 			} <br>
 		] <br>
+
+## You need the application.yaml file for run the application
+
+  > `For Example:` <br>
+    vakifbankconfig: <br>
+      client-id: #YapiKredi Personal Client ID <br>
+			client-secret: #YapiKredi Personal Client Secret <br>
+			token-url: https://apigw.vakifbank.com.tr:8443/auth/oauth/v2/token <br>
+			loan-url: https://apigw.vakifbank.com.tr:8443/loanCalculator <br>
+			currency-rates-url: https://apigw.vakifbank.com.tr:8443/getCurrencyRates <br>
+      <br>
+		yapikrediconfig: <br>
+			client-id: #YapiKredi Personal Client ID <br>
+			client-secret: #YapiKredi Personal Client Secret <br>
+			token-url: https://api.yapikredi.com.tr/auth/oauth/v2/token <br>
+			loan-url: https://api.yapikredi.com.tr/api/credit/calculation/v1/loanPaymentPlan <br>
+			currency-rates-url: https://api.yapikredi.com.tr/api/investmentrates/v1/currencyRates <br>
