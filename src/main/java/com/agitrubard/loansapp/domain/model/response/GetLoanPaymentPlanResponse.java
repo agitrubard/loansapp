@@ -8,7 +8,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class GetLoansPaymentPlanResponse {
+public class GetLoanPaymentPlanResponse {
 
     private BankName bankName;
     private Double intRate;

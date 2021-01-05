@@ -1,12 +1,12 @@
 package com.agitrubard.loansapp.integration.service;
 
-import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
-import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.request.LoanPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetLoanPaymentPlanResponse;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public interface CombinedBankingIntegrationService {
 
-    List<GetLoansPaymentPlanResponse> getLoansPaymentPlans(LoansPaymentPlanRequest loansPaymentPlanRequest) throws ExecutionException, InterruptedException;
+    List<GetLoanPaymentPlanResponse> getLoanPaymentPlans(LoanPaymentPlanRequest loanPaymentPlanRequest) throws ExecutionException, InterruptedException;
 }

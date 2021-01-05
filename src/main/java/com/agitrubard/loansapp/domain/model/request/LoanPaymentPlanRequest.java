@@ -6,7 +6,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
-public class LoansPaymentPlanRequest implements Serializable {
+public class LoanPaymentPlanRequest implements Serializable {
 
     private static final long serialVersionUID = -8224036318459891490L;
     @NotNull

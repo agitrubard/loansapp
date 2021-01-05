@@ -2,10 +2,10 @@ package com.agitrubard.loansapp.integration.service.impl;
 
 import com.agitrubard.loansapp.domain.model.exception.LoanAmountException;
 import com.agitrubard.loansapp.domain.model.exception.LoanTermException;
-import com.agitrubard.loansapp.domain.model.exception.LoansPaymentPlanResponseException;
+import com.agitrubard.loansapp.domain.model.exception.LoanPaymentPlanResponseException;
 import com.agitrubard.loansapp.domain.model.exception.TokenException;
-import com.agitrubard.loansapp.domain.model.request.LoansPaymentPlanRequest;
-import com.agitrubard.loansapp.domain.model.response.GetLoansPaymentPlanResponse;
+import com.agitrubard.loansapp.domain.model.request.LoanPaymentPlanRequest;
+import com.agitrubard.loansapp.domain.model.response.GetLoanPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.CombinedBankingIntegrationService;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 public class CombinedBankingIntegrationServiceImpl implements CombinedBankingIntegrationService {
-
     VakifBankIntegrationService vakifBankIntegrationService;
     YapiKrediIntegrationService yapiKrediIntegrationService;
 
@@ -28,14 +27,14 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
     }
 
     @Override
-    public List<GetLoansPaymentPlanResponse> getLoansPaymentPlans(LoansPaymentPlanRequest loansPaymentPlanRequest) throws ExecutionException, InterruptedException {
-        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank = getLoansPaymentPlanResponseVakifBank(loansPaymentPlanRequest);
+    public List<GetLoanPaymentPlanResponse> getLoanPaymentPlans(LoanPaymentPlanRequest loanPaymentPlanRequest) throws ExecutionException, InterruptedException {
+        CompletableFuture<GetLoanPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank = getLoansPaymentPlanResponseVakifBank(loanPaymentPlanRequest);
 
-        CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi = getLoansPaymentPlanResponseYapiKredi(loansPaymentPlanRequest);
+        CompletableFuture<GetLoanPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi = getLoansPaymentPlanResponseYapiKredi(loanPaymentPlanRequest);
 
-        CompletableFuture<List<GetLoansPaymentPlanResponse>> getLoansPaymentPlanResponses = getLoansPaymentPlanResponseVakifBank
+        CompletableFuture<List<GetLoanPaymentPlanResponse>> getLoansPaymentPlanResponses = getLoansPaymentPlanResponseVakifBank
                 .thenCombineAsync(getLoansPaymentPlanResponseYapiKredi, (vakifBankLoans, yapiKrediLoans) -> {
-                    List<GetLoansPaymentPlanResponse> responses = new ArrayList<>();
+                    List<GetLoanPaymentPlanResponse> responses = new ArrayList<>();
                     responses.add(vakifBankLoans);
                     responses.add(yapiKrediLoans);
                     return responses;
@@ -44,22 +43,22 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
         return getLoansPaymentPlanResponses.get();
     }
 
-    private CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi(LoansPaymentPlanRequest loansPaymentPlanRequest) {
+    private CompletableFuture<GetLoanPaymentPlanResponse> getLoansPaymentPlanResponseYapiKredi(LoanPaymentPlanRequest loanPaymentPlanRequest) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return yapiKrediIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
-            } catch (LoanAmountException | LoanTermException | TokenException | LoansPaymentPlanResponseException e) {
+                return yapiKrediIntegrationService.getLoanPaymentPlan(loanPaymentPlanRequest);
+            } catch (LoanAmountException | LoanTermException | TokenException | LoanPaymentPlanResponseException e) {
                 e.printStackTrace();
             }
             return null;
         });
     }
 
-    private CompletableFuture<GetLoansPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank(LoansPaymentPlanRequest loansPaymentPlanRequest) {
+    private CompletableFuture<GetLoanPaymentPlanResponse> getLoansPaymentPlanResponseVakifBank(LoanPaymentPlanRequest loanPaymentPlanRequest) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return vakifBankIntegrationService.getLoansPaymentPlan(loansPaymentPlanRequest);
-            } catch (LoansPaymentPlanResponseException | TokenException e) {
+                return vakifBankIntegrationService.getLoanPaymentPlan(loanPaymentPlanRequest);
+            } catch (LoanPaymentPlanResponseException | TokenException | LoanAmountException | LoanTermException e) {
                 e.printStackTrace();
             }
             return null;

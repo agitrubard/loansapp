@@ -6,8 +6,8 @@ vakifbankconfig:
   currency-rates-url: https://apigw.vakifbank.com.tr:8443/getCurrencyRates
 
 yapikrediconfig:
-    client-id: l7xx179417aa99e34db683a93e9eac411885
-    client-secret: f8c96815056b48d7992fc4221393ddcf
-    token-url: https://api.yapikredi.com.tr/auth/oauth/v2/token
-    loan-url: https://api.yapikredi.com.tr/api/credit/calculation/v1/loanPaymentPlan
-    currency-rates-url: https://api.yapikredi.com.tr/api/investmentrates/v1/currencyRates
+  client-id: l7xx179417aa99e34db683a93e9eac411885
+  client-secret: f8c96815056b48d7992fc4221393ddcf
+  token-url: https://api.yapikredi.com.tr/auth/oauth/v2/token
+  loan-url: https://api.yapikredi.com.tr/api/credit/calculation/v1/loanPaymentPlan
+  currency-rates-url: https://api.yapikredi.com.tr/api/investmentrates/v1/currencyRates
