@@ -2,6 +2,9 @@ package com.agitrubard.loansapp.domain.model.response.constant;
 
 public final class CustomConstant {
 
+    private CustomConstant() {
+    }
+
     public static final String ACCEPT = "Accept";
     public static final String ACCESS_TOKEN = "access_token";
     public static final String AUTHORIZATION = "Authorization";

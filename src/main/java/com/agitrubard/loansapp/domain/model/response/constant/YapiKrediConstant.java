@@ -2,6 +2,9 @@ package com.agitrubard.loansapp.domain.model.response.constant;
 
 public final class YapiKrediConstant {
 
+    private YapiKrediConstant() {
+    }
+
     public static final String BRANCH_CODE = "branchCode";
     public static final String BRANCH_CODE_VALUE_925 = "925";
     public static final String CATEGORY_CODE = "categoryCode";

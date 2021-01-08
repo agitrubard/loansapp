@@ -6,6 +6,9 @@ import java.util.Locale;
 
 public final class VakifBankConstant {
 
+    private VakifBankConstant() {
+    }
+
     public static final String COMMA = ",";
     public static final String CURRENCY_RATES_ENTITY_PARAMETERS = "{    \"ValidityDate\": \"" + getLocalDateTime() + "\"}";
     public static final String DATA = "Data";
