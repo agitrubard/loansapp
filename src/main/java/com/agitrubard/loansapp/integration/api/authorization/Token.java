@@ -1,7 +1,9 @@
 package com.agitrubard.loansapp.integration.api.authorization;
 
+import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.domain.model.response.constant.CustomConstant;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -13,35 +15,40 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-
 @Slf4j
 public class Token {
 
-    public static String getAccessToken(String TOKEN_URL, String CLIENT_ID, String CLIENT_SECRET) throws TokenException {
-        log.info("Token Call Starting");
+    public static String getAccessToken(BankName bankName, String TOKEN_URL, String CLIENT_ID, String CLIENT_SECRET) throws TokenException {
+        log.info(bankName + " Token Call Starting");
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> result;
-        result = restTemplate.exchange(TOKEN_URL, HttpMethod.POST, createTokenEntity(CLIENT_ID, CLIENT_SECRET), String.class);
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root;
+        ResponseEntity<String> result = null;
 
         try {
-            root = mapper.readTree(result.getBody());
-        } catch (IOException e) {
-            throw new TokenException();
+            result = restTemplate.exchange(TOKEN_URL, HttpMethod.POST, createTokenEntity(bankName, CLIENT_ID, CLIENT_SECRET), String.class);
+        } catch (Exception e) {
+            log.error(bankName + " Token Unknown Host Exception!");
         }
 
-        JsonNode accessToken = root.path(CustomConstant.ACCESS_TOKEN);
-        JsonNode tokenType = root.path(CustomConstant.TOKEN_TYPE);
+        ObjectMapper mapper = new ObjectMapper();
 
-        return tokenType.asText() + " " + accessToken.asText();
+        try {
+            JsonNode root = mapper.readTree(result.getBody());
+            JsonNode accessToken = root.path(CustomConstant.ACCESS_TOKEN);
+            JsonNode tokenType = root.path(CustomConstant.TOKEN_TYPE);
+
+            return tokenType.asText() + " " + accessToken.asText();
+        } catch (JsonProcessingException e) {
+            throw new TokenException();
+        } catch (NullPointerException e) {
+            log.error(bankName + " Token Null Pointer Exception!");
+            return null;
+        }
     }
 
-    private static HttpEntity<?> createTokenEntity(String CLIENT_ID, String CLIENT_SECRET) {
-        log.info("Token Entity Call Starting");
+    private static HttpEntity<?> createTokenEntity(BankName bankName, String CLIENT_ID, String CLIENT_SECRET) {
+        log.info(bankName + " Token Entity Call Starting");
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(CustomConstant.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);

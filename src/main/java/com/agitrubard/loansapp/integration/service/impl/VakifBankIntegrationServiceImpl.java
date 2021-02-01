@@ -1,6 +1,7 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
 import com.agitrubard.loansapp.domain.model.converter.GetLoanPaymentPlanResponseConverter;
+import com.agitrubard.loansapp.domain.model.exception.CurrencyRatesException;
 import com.agitrubard.loansapp.domain.model.exception.LoanPaymentPlanResponseException;
 import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.domain.model.request.LoanPaymentPlanRequest;
@@ -41,7 +42,7 @@ public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationServ
 
     @Override
     public GetLoanPaymentPlanResponse getLoanPaymentPlan(LoanPaymentPlanRequest loanPaymentPlanRequest) throws TokenException, LoanPaymentPlanResponseException {
-        log.info("VakifBank Loan Payment Plan Call Starting");
+        log.info(BankName.VAKIFBANK + " Loan Payment Plan Call Starting");
 
         HttpEntity<?> entity = createLoanEntity(loanPaymentPlanRequest);
         final ResponseEntity<String> result = restTemplate.exchange(vakifBankConfiguration.getLoanUrl(), HttpMethod.POST, entity, String.class);
@@ -50,28 +51,28 @@ public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationServ
     }
 
     @Override
-    public List<GetCurrencyRatesResponse> getCurrencyRates() throws TokenException {
-        log.info("VakifBank Currency Rates Call Starting");
+    public List<GetCurrencyRatesResponse> getCurrencyRates() throws TokenException, CurrencyRatesException {
+        log.info(BankName.VAKIFBANK + " Currency Rates Call Starting");
 
         HttpEntity<?> entity = createCurrencyRatesEntity();
         final ResponseEntity<VakifBankBaseResponse> result = restTemplate.exchange(vakifBankConfiguration.getCurrencyRatesUrl(), HttpMethod.POST, entity, VakifBankBaseResponse.class);
         VakifBankBaseResponse vakifBankBaseResponse = result.getBody();
 
-        return Optional.ofNullable(getCurrencyRatesResponse(vakifBankBaseResponse)).orElse(new ArrayList<>());
+        return Optional.ofNullable(getCurrencyRatesResponse(vakifBankBaseResponse)).orElseThrow(() -> new CurrencyRatesException());
     }
 
     private MultiValueMap<String, String> getHeaders() throws TokenException {
-        log.info("VakifBank Headers Call Starting");
+        log.info(BankName.VAKIFBANK + " Headers Call Starting");
 
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(CustomConstant.CONTENT_TYPE, CustomConstant.CONTENT_TYPE_APPLICATION_JSON);
-        headers.add(CustomConstant.AUTHORIZATION, Token.getAccessToken(vakifBankConfiguration.getTokenUrl(), vakifBankConfiguration.getClientId(), vakifBankConfiguration.getClientSecret()));
+        headers.add(CustomConstant.AUTHORIZATION, Token.getAccessToken(BankName.VAKIFBANK, vakifBankConfiguration.getTokenUrl(), vakifBankConfiguration.getClientId(), vakifBankConfiguration.getClientSecret()));
 
         return headers;
     }
 
     private HttpEntity<?> createLoanEntity(LoanPaymentPlanRequest loanPaymentPlanRequest) throws TokenException {
-        log.info("VakifBank Loan Entity Call Starting");
+        log.info(BankName.VAKIFBANK + " Loan Entity Call Starting");
 
         String parameters = "{    \"" + VakifBankConstant.LOAN_PRODUCT_ID + "\": \"" + VakifBankConstant.LOAN_PRODUCT_ID_VALUE_41001 + "\"" + VakifBankConstant.COMMA +
                 "\"" + VakifBankConstant.LOAN_TERM + "\": " + loanPaymentPlanRequest.getLoanTerm() + VakifBankConstant.COMMA +
@@ -84,7 +85,7 @@ public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationServ
     }
 
     private GetLoanPaymentPlanResponse getLoansPaymentPlanResponse(ResponseEntity<String> result) throws LoanPaymentPlanResponseException {
-        log.info("VakifBank Get Loans Payment Plan Response Call Starting");
+        log.info(BankName.VAKIFBANK + " Get Loans Payment Plan Response Call Starting");
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root;
@@ -96,19 +97,25 @@ public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationServ
         }
 
         JsonNode pathDataLoan = root.path(VakifBankConstant.DATA).path(VakifBankConstant.LOAN);
-        Double intRate = (pathDataLoan.findValue(VakifBankConstant.INTEREST_RATE)).asDouble();
-        Double loanTerm = (pathDataLoan.findValue(VakifBankConstant.LOAN_TERM)).asDouble();
-        Double totalAmount = (pathDataLoan.findValue(VakifBankConstant.TOTAL_AMOUNT)).asDouble();
-        Double installmentAmount = (pathDataLoan.findValue(VakifBankConstant.INSTALLMENT_AMOUNT)).asDouble();
-        Double totalPaymentAmount = (installmentAmount * loanTerm);
-        Double totalInterest = totalPaymentAmount - totalAmount;
-        Double monthlyCostRate = ((installmentAmount - (totalAmount / loanTerm)) / totalInterest) * 100;
 
-        return GetLoanPaymentPlanResponseConverter.convert(BankName.VAKIFBANK, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
+        try {
+            Double intRate = (pathDataLoan.findValue(VakifBankConstant.INTEREST_RATE)).asDouble();
+            Double loanTerm = (pathDataLoan.findValue(VakifBankConstant.LOAN_TERM)).asDouble();
+            Double totalAmount = (pathDataLoan.findValue(VakifBankConstant.TOTAL_AMOUNT)).asDouble();
+            Double installmentAmount = (pathDataLoan.findValue(VakifBankConstant.INSTALLMENT_AMOUNT)).asDouble();
+            Double totalPaymentAmount = (installmentAmount * loanTerm);
+            Double totalInterest = totalPaymentAmount - totalAmount;
+            Double monthlyCostRate = ((installmentAmount - (totalAmount / loanTerm)) / totalInterest) * 100;
+
+            return GetLoanPaymentPlanResponseConverter.convert(BankName.VAKIFBANK, intRate, totalInterest, monthlyCostRate, installmentAmount, totalPaymentAmount);
+        } catch (NullPointerException e) {
+            log.error(BankName.VAKIFBANK + " Get Loans Payment Plan Response Null Value Error!");
+            return new GetLoanPaymentPlanResponse();
+        }
     }
 
     private HttpEntity<?> createCurrencyRatesEntity() throws TokenException {
-        log.info("VakifBank Currency Rates Entity Call Starting");
+        log.info(BankName.VAKIFBANK + " Currency Rates Entity Call Starting");
 
         String parameters = VakifBankConstant.CURRENCY_RATES_ENTITY_PARAMETERS;
         byte[] body = parameters.getBytes();
@@ -117,7 +124,7 @@ public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationServ
     }
 
     private List<GetCurrencyRatesResponse> getCurrencyRatesResponse(VakifBankBaseResponse vakifBankBaseResponse) {
-        log.info("VakifBank Get Currency Rates Response Call Starting");
+        log.info(BankName.VAKIFBANK + " Get Currency Rates Response Call Starting");
 
         if (vakifBankBaseResponse == null || vakifBankBaseResponse.getData() == null) {
             return new ArrayList<>();

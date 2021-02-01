@@ -1,5 +1,6 @@
 package com.agitrubard.loansapp.integration.service.impl;
 
+import com.agitrubard.loansapp.domain.model.enums.BankName;
 import com.agitrubard.loansapp.domain.model.exception.LoanAmountException;
 import com.agitrubard.loansapp.domain.model.exception.LoanTermException;
 import com.agitrubard.loansapp.domain.model.exception.LoanPaymentPlanResponseException;
@@ -10,6 +11,7 @@ import com.agitrubard.loansapp.integration.service.CombinedBankingIntegrationSer
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class CombinedBankingIntegrationServiceImpl implements CombinedBankingIntegrationService {
     private final VakifBankIntegrationService vakifBankIntegrationService;
     private final YapiKrediIntegrationService yapiKrediIntegrationService;
@@ -45,7 +48,7 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
             try {
                 return yapiKrediIntegrationService.getLoanPaymentPlan(loanPaymentPlanRequest);
             } catch (LoanAmountException | LoanTermException | TokenException | LoanPaymentPlanResponseException e) {
-                e.printStackTrace();
+                log.error(BankName.YAPIKREDI + " Get Loans Payment Plan Response in Combined Banking Integration Service");
             }
             return null;
         });
@@ -56,7 +59,7 @@ public class CombinedBankingIntegrationServiceImpl implements CombinedBankingInt
             try {
                 return vakifBankIntegrationService.getLoanPaymentPlan(loanPaymentPlanRequest);
             } catch (LoanPaymentPlanResponseException | TokenException | LoanAmountException | LoanTermException e) {
-                e.printStackTrace();
+                log.error(BankName.VAKIFBANK + " Get Loans Payment Plan Response in Combined Banking Integration Service");
             }
             return null;
         });

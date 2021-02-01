@@ -25,4 +25,9 @@ public class ApiExceptionHandler {
     public String token() {
         return "Couldn't get tokens!";
     }
+
+    @ExceptionHandler({CurrencyRatesException.class})
+    public String currencyRates() {
+        return "Couldn't get Currency Rates!";
+    }
 }

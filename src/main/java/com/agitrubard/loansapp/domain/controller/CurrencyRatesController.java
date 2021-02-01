@@ -1,6 +1,7 @@
 package com.agitrubard.loansapp.domain.controller;
 
 import com.agitrubard.loansapp.domain.controller.endpoint.CurrencyRatesEndpoint;
+import com.agitrubard.loansapp.domain.model.exception.CurrencyRatesException;
 import com.agitrubard.loansapp.domain.model.exception.TokenException;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
@@ -16,12 +17,12 @@ public class CurrencyRatesController {
     private final YapiKrediIntegrationService yapiKrediIntegrationService;
 
     @GetMapping(value = CurrencyRatesEndpoint.GET_CURRENCY_RATES_VAKIF_BANK)
-    public ResponseEntity<Object> getCurrencyRatesVakifBank() throws TokenException {
+    public ResponseEntity<Object> getCurrencyRatesVakifBank() throws TokenException, CurrencyRatesException {
         return ResponseEntity.ok(vakifBankIntegrationService.getCurrencyRates());
     }
 
     @GetMapping(value = CurrencyRatesEndpoint.GET_CURRENCY_RATES_YAPI_KREDI)
-    public ResponseEntity<Object> getCurrencyRatesYapiKredi() throws TokenException {
+    public ResponseEntity<Object> getCurrencyRatesYapiKredi() throws TokenException, CurrencyRatesException {
         return ResponseEntity.ok(yapiKrediIntegrationService.getCurrencyRates());
     }
 }
