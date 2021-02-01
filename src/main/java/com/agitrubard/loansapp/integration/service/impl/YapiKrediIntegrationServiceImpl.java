@@ -19,6 +19,7 @@ import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -34,15 +35,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 @Slf4j
 public class YapiKrediIntegrationServiceImpl implements YapiKrediIntegrationService {
     private final YapiKrediConfiguration yapiKrediConfiguration;
     private final RestTemplate restTemplate;
-
-    public YapiKrediIntegrationServiceImpl(YapiKrediConfiguration yapiKrediConfiguration, RestTemplate restTemplate) {
-        this.yapiKrediConfiguration = yapiKrediConfiguration;
-        this.restTemplate = restTemplate;
-    }
 
     @Override
     public GetLoanPaymentPlanResponse getLoanPaymentPlan(LoanPaymentPlanRequest loanPaymentPlanRequest) throws LoanAmountException, LoanTermException, TokenException, LoanPaymentPlanResponseException {

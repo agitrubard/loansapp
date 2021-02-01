@@ -10,6 +10,7 @@ import com.agitrubard.loansapp.domain.model.response.GetLoanPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.CombinedBankingIntegrationService;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,18 +20,11 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(LoansControllerEndpoint.CUSTOMER)
+@AllArgsConstructor
 public class LoansController {
-    VakifBankIntegrationService vakifBankIntegrationService;
-    YapiKrediIntegrationService yapiKrediIntegrationService;
-    CombinedBankingIntegrationService combinedBankingIntegrationService;
-
-    public LoansController(VakifBankIntegrationService vakifBankIntegrationService,
-                           YapiKrediIntegrationService yapiKrediIntegrationService,
-                           CombinedBankingIntegrationService combinedBankingIntegrationService) {
-        this.vakifBankIntegrationService = vakifBankIntegrationService;
-        this.yapiKrediIntegrationService = yapiKrediIntegrationService;
-        this.combinedBankingIntegrationService = combinedBankingIntegrationService;
-    }
+    private final VakifBankIntegrationService vakifBankIntegrationService;
+    private final YapiKrediIntegrationService yapiKrediIntegrationService;
+    private final CombinedBankingIntegrationService combinedBankingIntegrationService;
 
     @PostMapping(value = LoansControllerEndpoint.GET_LOAN_PAYMENT_PLAN_VAKIF_BANK)
     public ResponseEntity<Object> getLoanPaymentPlanVakifBank(@RequestBody @Valid LoanPaymentPlanRequest loanPaymentPlanRequest) throws LoanPaymentPlanResponseException, TokenException, LoanTermException, LoanAmountException {

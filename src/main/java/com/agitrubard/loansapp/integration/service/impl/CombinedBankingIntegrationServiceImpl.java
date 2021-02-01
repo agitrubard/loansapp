@@ -9,6 +9,7 @@ import com.agitrubard.loansapp.domain.model.response.GetLoanPaymentPlanResponse;
 import com.agitrubard.loansapp.integration.service.CombinedBankingIntegrationService;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.agitrubard.loansapp.integration.service.YapiKrediIntegrationService;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,14 +18,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Service
+@AllArgsConstructor
 public class CombinedBankingIntegrationServiceImpl implements CombinedBankingIntegrationService {
-    VakifBankIntegrationService vakifBankIntegrationService;
-    YapiKrediIntegrationService yapiKrediIntegrationService;
-
-    public CombinedBankingIntegrationServiceImpl(VakifBankIntegrationService vakifBankIntegrationService, YapiKrediIntegrationService yapiKrediIntegrationService) {
-        this.vakifBankIntegrationService = vakifBankIntegrationService;
-        this.yapiKrediIntegrationService = yapiKrediIntegrationService;
-    }
+    private final VakifBankIntegrationService vakifBankIntegrationService;
+    private final YapiKrediIntegrationService yapiKrediIntegrationService;
 
     @Override
     public List<GetLoanPaymentPlanResponse> getLoanPaymentPlans(LoanPaymentPlanRequest loanPaymentPlanRequest) throws ExecutionException, InterruptedException {

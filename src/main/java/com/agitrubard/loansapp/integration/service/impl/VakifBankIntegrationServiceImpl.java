@@ -15,6 +15,7 @@ import com.agitrubard.loansapp.integration.api.config.VakifBankConfiguration;
 import com.agitrubard.loansapp.integration.service.VakifBankIntegrationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -32,15 +33,11 @@ import java.util.stream.Collectors;
 
 
 @Service
+@AllArgsConstructor
 @Slf4j
 public class VakifBankIntegrationServiceImpl implements VakifBankIntegrationService {
     private final VakifBankConfiguration vakifBankConfiguration;
     private final RestTemplate restTemplate;
-
-    public VakifBankIntegrationServiceImpl(VakifBankConfiguration vakifBankConfiguration, RestTemplate restTemplate) {
-        this.vakifBankConfiguration = vakifBankConfiguration;
-        this.restTemplate = restTemplate;
-    }
 
     @Override
     public GetLoanPaymentPlanResponse getLoanPaymentPlan(LoanPaymentPlanRequest loanPaymentPlanRequest) throws TokenException, LoanPaymentPlanResponseException {
